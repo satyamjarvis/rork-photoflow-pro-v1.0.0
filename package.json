@@ -4,7 +4,7 @@
   "private": true,
   "main": "expo-router/entry",
   "scripts": {
-    "dev": "bunx rork dev",
+    "dev": "bunx rork start -p tylncybzm70vv57264pu1 --tunnel",
     "start": "bunx rork start -p tylncybzm70vv57264pu1 --tunnel",
     "start-web": "bunx rork start -p tylncybzm70vv57264pu1 --web --tunnel",
     "start-web-dev": "DEBUG=expo* bunx rork start -p tylncybzm70vv57264pu1 --web --tunnel",
