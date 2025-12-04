@@ -1,7 +1,5 @@
 import { publicProcedure } from "../../../create-context";
 import { z } from "zod";
-import { createClient } from "@supabase/supabase-js";
-import { Database } from "@/types/database";
 
 export default publicProcedure
   .input(z.object({
@@ -27,10 +25,9 @@ export default publicProcedure
         console.log('[Portfolio List] Using admin client');
         dbClient = supabaseAdmin;
       } else {
-        console.log('[Portfolio List] Using regular client');
-        const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL!;
-        const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY!;
-        dbClient = createClient<Database>(supabaseUrl, supabaseAnonKey);
+        console.log('[Portfolio List] Using authenticated client from context');
+        // Use the supabase client from context which has proper authentication
+        dbClient = supabase;
       }
 
       let query = dbClient
