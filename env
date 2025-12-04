@@ -10,7 +10,7 @@ SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhY
 # ================================
 # Backend API Configuration
 # ================================
-EXPO_PUBLIC_RORK_API_BASE_URL=https://tylncybzm70vv57264pu1.rork.run
+EXPO_PUBLIC_RORK_API_BASE_URL=https://a-jwzbovlj9vxi7gyv13tac.rorktest.dev
 
 # ================================
 # Resend Email Configuration
