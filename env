@@ -1,0 +1,20 @@
+# ================================
+# Supabase Configuration
+# ================================
+EXPO_PUBLIC_SUPABASE_URL=https://phujkzgxdrfvzzykvxcf.supabase.co
+EXPO_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBodWpremd4ZHJmdnp6eWt2eGNmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQ2OTY2MTgsImV4cCI6MjA4MDI3MjYxOH0.Az80xvAKhIbpJd68cUWwd2SAT8tfIV7y9GoizESMXKg
+
+# Backend only - not exposed to frontend
+SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBodWpremd4ZHJmdnp6eWt2eGNmIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2NDY5NjYxOCwiZXhwIjoyMDgwMjcyNjE4fQ.gCHzDXXXXznBrxdb_Dozi2GyMqyOGTU5l5tbDJDtImQ
+
+# ================================
+# Backend API Configuration
+# ================================
+EXPO_PUBLIC_RORK_API_BASE_URL=https://tylncybzm70vv57264pu1.rork.run
+
+# ================================
+# Resend Email Configuration
+# ================================
+RESEND_API_KEY=re_SwNdmtV4_PdfqqzFDmnjbR1vC7mVRkRwG
+RESEND_FROM_EMAIL=hello@davidhogan.ie
+RESEND_DOMAIN=davidhogan.ie
