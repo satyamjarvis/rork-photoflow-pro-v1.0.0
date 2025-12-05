@@ -21,11 +21,13 @@ import {
   ChevronRight,
   RefreshCw,
   Search,
+  Shield,
   Sparkles,
   X,
 } from 'lucide-react-native';
 import { Colors, Spacing, BorderRadius } from '@/constants/colors';
 import { trpc } from '@/lib/trpc';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface PortfolioItem {
   id: string;
@@ -255,6 +257,7 @@ LightboxViewer.displayName = 'LightboxViewer';
 
 export default function PortfolioScreen() {
   const router = useRouter();
+  const { profile, setAdminMode } = useAuth();
   const [searchQuery, setSearchQuery] = React.useState<string>('');
   const fadeAnim = React.useRef(new Animated.Value(0)).current;
   const [lightboxVisible, setLightboxVisible] = React.useState(false);
@@ -433,6 +436,18 @@ export default function PortfolioScreen() {
       <Stack.Screen options={{ headerShown: false }} />
       <SafeAreaView style={styles.safeArea} edges={['top']}>
         <View style={styles.staticSearchSection}>
+          {profile?.role === 'admin' && (
+            <TouchableOpacity 
+              style={styles.adminToggle}
+              onPress={async () => {
+                await setAdminMode(true);
+                router.replace('/(admin)');
+              }}
+            >
+              <Shield size={18} color="#6B7280" />
+              <Text style={styles.adminToggleText}>Admin View</Text>
+            </TouchableOpacity>
+          )}
           <View style={styles.searchContainer}>
             <Search color="#9CA3AF" size={20} />
             <TextInput
@@ -531,6 +546,22 @@ const styles = StyleSheet.create({
     paddingTop: Spacing.md,
     paddingBottom: Spacing.md,
     backgroundColor: '#FFFFFF',
+  },
+  adminToggle: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F3F4F6',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+    gap: 6,
+    alignSelf: 'flex-end',
+    marginBottom: Spacing.sm,
+  },
+  adminToggleText: {
+    fontSize: 14,
+    color: '#6B7280',
+    fontWeight: '500' as const,
   },
   pageHeader: {
     flexDirection: 'row',

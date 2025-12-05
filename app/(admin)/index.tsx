@@ -4,11 +4,11 @@ import { useRouter, Stack } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '@/contexts/AuthContext';
 import { Colors, Spacing } from '@/constants/colors';
-import { Users, MapPin, Calendar, ImageIcon, Video, Tag, MessageSquare, UserCog, CalendarCheck, FileImage, ChevronRight } from 'lucide-react-native';
+import { Users, MapPin, Calendar, ImageIcon, Video, Tag, MessageSquare, UserCog, CalendarCheck, FileImage, ChevronRight, Eye } from 'lucide-react-native';
 import { trpc } from '@/lib/trpc';
 
 export default function DashboardScreen() {
-  const { isLoading: authLoading } = useAuth();
+  const { isLoading: authLoading, setAdminMode } = useAuth();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { data: stats, isLoading: statsLoading } = trpc.dashboard.stats.useQuery();
@@ -33,8 +33,22 @@ export default function DashboardScreen() {
     <View style={styles.container}>
       <Stack.Screen options={{ headerShown: false }} />
       <View style={[styles.safeHeader, { paddingTop: insets.top }]}>
-        <Text style={styles.pageTitle}>Dashboard</Text>
-        <Text style={styles.pageSubtitle}>Overview of your photography platform</Text>
+        <View style={styles.headerContent}>
+          <View style={styles.headerTextContainer}>
+            <Text style={styles.pageTitle}>Dashboard</Text>
+            <Text style={styles.pageSubtitle}>Overview of your photography platform</Text>
+          </View>
+          <TouchableOpacity 
+            style={styles.viewToggle}
+            onPress={async () => {
+              await setAdminMode(false);
+              router.replace('/(tabs)/portfolio');
+            }}
+          >
+            <Eye size={20} color="#6B7280" />
+            <Text style={styles.viewToggleText}>Public View</Text>
+          </TouchableOpacity>
+        </View>
       </View>
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.content}>
 
@@ -223,6 +237,28 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: '#6B7280',
     marginTop: 4,
+  },
+  headerContent: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  headerTextContainer: {
+    flex: 1,
+  },
+  viewToggle: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F3F4F6',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+    gap: 6,
+  },
+  viewToggleText: {
+    fontSize: 14,
+    color: '#6B7280',
+    fontWeight: '500' as const,
   },
   scrollView: {
     flex: 1,
