@@ -545,8 +545,14 @@ CREATE POLICY "Admins can read audit logs" ON audit_logs
     EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'admin')
   );
 
-DROP POLICY IF EXISTS "System can insert audit logs" ON audit_logs;
-CREATE POLICY "System can insert audit logs" ON audit_logs
+DROP POLICY IF EXISTS "Admins can insert audit logs" ON audit_logs;
+CREATE POLICY "Admins can insert audit logs" ON audit_logs
+  FOR INSERT WITH CHECK (
+    EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'admin')
+  );
+
+DROP POLICY IF EXISTS "Service role can insert audit logs" ON audit_logs;
+CREATE POLICY "Service role can insert audit logs" ON audit_logs
   FOR INSERT WITH CHECK (true);
 
 -- LICENSING INQUIRIES POLICIES
