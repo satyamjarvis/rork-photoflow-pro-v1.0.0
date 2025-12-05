@@ -193,18 +193,20 @@ CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS trigger
 LANGUAGE plpgsql
 SECURITY DEFINER
-AS $$
+SET search_path = public
+AS $
 DECLARE
   user_count INT;
 BEGIN
   -- Count existing users
-  SELECT COUNT(*) INTO user_count FROM profiles;
+  SELECT COUNT(*) INTO user_count FROM public.profiles;
   
+  -- Insert the new profile
   -- First user becomes admin, all others are viewers
   INSERT INTO public.profiles (id, email, role, status, onboarding_completed, last_login)
   VALUES (
     NEW.id,
-    NEW.email,
+    COALESCE(NEW.email, NEW.phone, 'user-' || NEW.id::text),
     CASE WHEN user_count = 0 THEN 'admin' ELSE 'viewer' END,
     'active',
     CASE WHEN user_count = 0 THEN false ELSE true END,
@@ -212,8 +214,13 @@ BEGIN
   );
   
   RETURN NEW;
+EXCEPTION
+  WHEN others THEN
+    -- Log the error for debugging
+    RAISE WARNING 'Error in handle_new_user: %', SQLERRM;
+    RETURN NEW;
 END;
-$$;
+$;
 
 -- Trigger to auto-create profile on auth signup
 DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
@@ -242,6 +249,10 @@ ALTER TABLE password_reset_tokens ENABLE ROW LEVEL SECURITY;
 -- ============================================
 -- PROFILES POLICIES
 -- ============================================
+
+-- Allow signup trigger to create profile
+CREATE POLICY "Allow signup trigger to create profile" ON profiles
+  FOR INSERT WITH CHECK (true);
 
 -- Users can read their own profile
 CREATE POLICY "Users can read own profile" ON profiles
