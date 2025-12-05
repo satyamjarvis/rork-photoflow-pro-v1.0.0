@@ -7,7 +7,7 @@ import { Colors, Spacing } from '@/constants/colors';
 import { Users, MapPin, Calendar, ImageIcon, Video, Tag, MessageSquare, UserCog, CalendarCheck, FileImage, ChevronRight } from 'lucide-react-native';
 import { trpc } from '@/lib/trpc';
 
-export default function HomeScreen() {
+export default function DashboardScreen() {
   const { isLoading: authLoading } = useAuth();
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -100,7 +100,7 @@ export default function HomeScreen() {
           
           <TouchableOpacity 
             style={styles.actionCard}
-            onPress={() => router.push('/locations')}
+            onPress={() => router.push('/(tabs)/locations')}
           >
             <View style={styles.actionIcon}>
               <MapPin color="#1A1A1A" size={24} />
@@ -128,7 +128,7 @@ export default function HomeScreen() {
 
           <TouchableOpacity 
             style={styles.actionCard}
-            onPress={() => router.push('/users')}
+            onPress={() => router.push('/(tabs)/users')}
           >
             <View style={styles.actionIcon}>
               <UserCog color="#1A1A1A" size={24} />
@@ -142,7 +142,7 @@ export default function HomeScreen() {
 
           <TouchableOpacity 
             style={styles.actionCard}
-            onPress={() => router.push('/workshops')}
+            onPress={() => router.push('/(tabs)/workshops')}
           >
             <View style={styles.actionIcon}>
               <Calendar color="#1A1A1A" size={24} />

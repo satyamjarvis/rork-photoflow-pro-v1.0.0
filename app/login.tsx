@@ -1,11 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
   TextInput,
   TouchableOpacity,
   StyleSheet,
-  Image,
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
@@ -20,8 +19,18 @@ export default function LoginScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const { signIn, signInWithBiometric } = useAuth();
+  const { signIn, signInWithBiometric, profile, isAuthenticated, adminModeEnabled } = useAuth();
   const router = useRouter();
+
+  useEffect(() => {
+    if (isAuthenticated && profile && !isLoading) {
+      if (profile.role === 'admin' && adminModeEnabled) {
+        router.replace('/(admin)');
+      } else {
+        router.replace('/(tabs)/portfolio');
+      }
+    }
+  }, [isAuthenticated, profile, adminModeEnabled, isLoading, router]);
 
   const handleLogin = async () => {
     if (!email || !password) {
@@ -32,10 +41,8 @@ export default function LoginScreen() {
     setIsLoading(true);
     try {
       await signIn(email, password, true);
-      router.replace('/(tabs)');
     } catch (error: any) {
       Alert.alert('Login Failed', error.message || 'Invalid credentials');
-    } finally {
       setIsLoading(false);
     }
   };
@@ -43,7 +50,6 @@ export default function LoginScreen() {
   const handleBiometricLogin = async () => {
     try {
       await signInWithBiometric();
-      router.replace('/(tabs)');
     } catch (error: any) {
       Alert.alert('Error', error.message || 'Biometric authentication failed');
     }

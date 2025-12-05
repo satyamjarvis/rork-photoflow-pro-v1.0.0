@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Switch, Alert, Mo
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/contexts/AuthContext';
 import { Colors, Typography } from '@/constants/colors';
-import { User as UserIcon, Users, ChevronRight, Eye, EyeOff, Camera, LogOut, Bell, Globe, Edit } from 'lucide-react-native';
+import { User as UserIcon, Users, ChevronRight, Eye, EyeOff, Camera, LogOut, Bell, Globe, Edit, LayoutDashboard } from 'lucide-react-native';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
@@ -241,7 +241,22 @@ export default function ProfileScreen() {
               <View style={styles.adminActionsCard}>
                 <TouchableOpacity
                   style={styles.adminActionItem}
-                  onPress={() => router.push('/users')}
+                  onPress={() => router.push('/(admin)')}
+                >
+                  <View style={styles.adminActionLeft}>
+                    <View style={[styles.settingIcon, { backgroundColor: '#E3F2FD' }]}>
+                      <LayoutDashboard color="#2196F3" size={20} />
+                    </View>
+                    <Text style={styles.adminActionText}>Dashboard</Text>
+                  </View>
+                  <ChevronRight color="#999" size={20} />
+                </TouchableOpacity>
+                
+                <View style={styles.settingDivider} />
+                
+                <TouchableOpacity
+                  style={styles.adminActionItem}
+                  onPress={() => router.push('/(tabs)/users')}
                 >
                   <View style={styles.adminActionLeft}>
                     <View style={[styles.settingIcon, { backgroundColor: '#E8F5E9' }]}>

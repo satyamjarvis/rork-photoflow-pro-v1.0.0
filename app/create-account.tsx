@@ -86,7 +86,7 @@ export default function CreateAccountScreen() {
       Alert.alert('Success', 'Account created successfully!', [
         {
           text: 'OK',
-          onPress: () => router.replace('/(tabs)'),
+          onPress: () => router.replace('/(tabs)/portfolio'),
         },
       ]);
     } catch (error: any) {
