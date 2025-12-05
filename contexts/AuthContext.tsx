@@ -81,7 +81,7 @@ export const [AuthContext, useAuth] = createContextHook<AuthState & AuthActions>
           row_id: profile.id,
           payload: { admin_mode: enabled } as any,
         });
-        if (auditError) console.error('Failed to log audit:', auditError);
+        if (auditError) console.error('Failed to log audit:', JSON.stringify(auditError, null, 2));
       }
     } catch (error) {
       console.error('Failed to set admin mode:', error);
