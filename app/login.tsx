@@ -5,7 +5,7 @@ import {
   TextInput,
   TouchableOpacity,
   StyleSheet,
-  Image,
+
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
@@ -20,7 +20,7 @@ export default function LoginScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const { signIn, signInWithBiometric } = useAuth();
+  const auth = useAuth();
   const router = useRouter();
 
   const handleLogin = async () => {
@@ -31,8 +31,15 @@ export default function LoginScreen() {
 
     setIsLoading(true);
     try {
-      await signIn(email, password, true);
-      router.replace('/(tabs)');
+      await auth.signIn(email, password, true);
+      
+      setTimeout(() => {
+        if (auth.profile?.role === 'admin') {
+          router.replace('/(tabs)');
+        } else {
+          router.replace('/public');
+        }
+      }, 500);
     } catch (error: any) {
       Alert.alert('Login Failed', error.message || 'Invalid credentials');
     } finally {
@@ -42,8 +49,15 @@ export default function LoginScreen() {
 
   const handleBiometricLogin = async () => {
     try {
-      await signInWithBiometric();
-      router.replace('/(tabs)');
+      await auth.signInWithBiometric();
+      
+      setTimeout(() => {
+        if (auth.profile?.role === 'admin') {
+          router.replace('/(tabs)');
+        } else {
+          router.replace('/public');
+        }
+      }, 500);
     } catch (error: any) {
       Alert.alert('Error', error.message || 'Biometric authentication failed');
     }

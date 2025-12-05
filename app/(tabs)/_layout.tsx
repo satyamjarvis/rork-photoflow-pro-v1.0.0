@@ -1,14 +1,12 @@
 import { Tabs, useRouter, useSegments } from "expo-router";
-import { Home, MapPin, Briefcase, ImageIcon, User } from "lucide-react-native";
+import { Home, Users as UsersIcon, FileImage } from "lucide-react-native";
 import React, { useEffect } from "react";
-import { useTranslation } from "react-i18next";
 import { useAuth } from "@/contexts/AuthContext";
 
 import { Colors } from "@/constants/colors";
 
-export default function TabLayout() {
-  const { t } = useTranslation();
-  const { isAuthenticated, isLoading } = useAuth();
+export default function AdminTabLayout() {
+  const { isAuthenticated, isLoading, profile } = useAuth();
   const router = useRouter();
   const segments = useSegments();
 
@@ -19,8 +17,10 @@ export default function TabLayout() {
 
     if (!isAuthenticated && inAuthGroup) {
       router.replace('/login');
+    } else if (isAuthenticated && profile?.role !== 'admin' && inAuthGroup) {
+      router.replace('/public');
     }
-  }, [isAuthenticated, isLoading, segments, router]);
+  }, [isAuthenticated, isLoading, segments, router, profile]);
 
   return (
     <Tabs
@@ -37,40 +37,39 @@ export default function TabLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: t('tabs.home'),
+          title: 'Dashboard',
           tabBarIcon: ({ color }) => <Home color={color} size={24} />,
         }}
       />
       <Tabs.Screen
-        name="locations"
+        name="users"
         options={{
-          title: t('tabs.locations'),
-          tabBarIcon: ({ color }) => <MapPin color={color} size={24} />,
-        }}
-      />
-      <Tabs.Screen
-        name="workshops"
-        options={{
-          title: t('tabs.workshops'),
-          tabBarIcon: ({ color }) => <Briefcase color={color} size={24} />,
-        }}
-      />
-      <Tabs.Screen
-        name="portfolio"
-        options={{
-          title: t('tabs.portfolio'),
-          tabBarIcon: ({ color }) => <ImageIcon color={color} size={24} />,
+          title: 'Users',
+          tabBarIcon: ({ color }) => <UsersIcon color={color} size={24} />,
         }}
       />
       <Tabs.Screen
         name="profile"
         options={{
-          title: t('tabs.profile'),
-          tabBarIcon: ({ color }) => <User color={color} size={24} />,
+          title: 'Profile',
+          tabBarIcon: ({ color }) => <FileImage color={color} size={24} />,
+          href: null,
         }}
       />
       <Tabs.Screen
-        name="users"
+        name="locations"
+        options={{
+          href: null,
+        }}
+      />
+      <Tabs.Screen
+        name="workshops"
+        options={{
+          href: null,
+        }}
+      />
+      <Tabs.Screen
+        name="portfolio"
         options={{
           href: null,
         }}
@@ -78,3 +77,5 @@ export default function TabLayout() {
     </Tabs>
   );
 }
+
+

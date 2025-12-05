@@ -15,7 +15,8 @@ const queryClient = new QueryClient();
 function RootLayoutNav() {
   return (
     <Stack screenOptions={{ headerBackTitle: "Back" }}>
-      <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+      <Stack.Screen name="(tabs)" options={{ headerShown: false, title: "Admin" }} />
+      <Stack.Screen name="public" options={{ headerShown: false, title: "Public" }} />
       <Stack.Screen name="login" options={{ headerShown: false }} />
       <Stack.Screen name="create-account" options={{ headerShown: false }} />
       <Stack.Screen name="forgot-password" options={{ headerShown: false }} />
