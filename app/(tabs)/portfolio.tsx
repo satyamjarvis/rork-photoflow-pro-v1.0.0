@@ -6,6 +6,7 @@ import {
   Image,
   Modal,
   RefreshControl,
+  ScrollView,
   StyleSheet,
   Text,
   TextInput,
@@ -23,7 +24,7 @@ import {
   Sparkles,
   X,
 } from 'lucide-react-native';
-import { Colors, Spacing } from '@/constants/colors';
+import { Colors, Spacing, BorderRadius } from '@/constants/colors';
 import { trpc } from '@/lib/trpc';
 
 interface PortfolioItem {
@@ -55,7 +56,6 @@ const SCREEN_WIDTH = Dimensions.get('window').width;
 const COLUMN_GAP = 12;
 const HORIZONTAL_PADDING = 32;
 const COLUMN_WIDTH = (SCREEN_WIDTH - HORIZONTAL_PADDING - COLUMN_GAP) / 2;
-const SEARCH_SECTION_HEIGHT = Spacing.lg + 52 + Spacing.md;
 
 interface MasonryItem extends PortfolioItem {
   height: number;
@@ -276,16 +276,7 @@ export default function PortfolioScreen() {
   );
 
   React.useEffect(() => {
-    console.log('[PortfolioTab] Fetch state changed', { 
-      isLoading, 
-      isRefetching, 
-      hasError: Boolean(error),
-      errorMessage: error?.message,
-      errorData: (error as any)?.data,
-    });
-    if (error) {
-      console.error('[PortfolioTab] Full error object:', error);
-    }
+    console.log('[PortfolioTab] Fetch state changed', { isLoading, isRefetching, hasError: Boolean(error) });
   }, [isLoading, isRefetching, error]);
 
   React.useEffect(() => {
@@ -428,8 +419,7 @@ export default function PortfolioScreen() {
     return (
       <View style={styles.loadingContainer}>
         <Stack.Screen options={{ headerShown: false }} />
-        <Text style={styles.errorText}>Unable to load portfolio</Text>
-        <Text style={styles.errorSubtext}>{error.message}</Text>
+        <Text style={styles.errorText}>Unable to load portfolio.</Text>
         <TouchableOpacity style={styles.retryButton} onPress={handleRefresh} testID="portfolio-retry-button">
           <RefreshCw color="#0F172A" size={18} />
           <Text style={styles.retryButtonText}>Try again</Text>
@@ -442,24 +432,23 @@ export default function PortfolioScreen() {
     <View style={styles.root}>
       <Stack.Screen options={{ headerShown: false }} />
       <SafeAreaView style={styles.safeArea} edges={['top']}>
-        <View style={styles.contentShell}>
-          <View style={styles.searchWrapper}>
-            <View style={styles.searchContainer}>
-              <Search color="#9CA3AF" size={18} />
-              <TextInput
-                style={styles.searchInput}
-                value={searchQuery}
-                onChangeText={setSearchQuery}
-                placeholder="Search by title or mood"
-                placeholderTextColor="#9CA3AF"
-                testID="portfolio-search-input"
-              />
-            </View>
+        <View style={styles.staticSearchSection}>
+          <View style={styles.searchContainer}>
+            <Search color="#9CA3AF" size={18} />
+            <TextInput
+              style={styles.searchInput}
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+              placeholder="Search by title or mood"
+              placeholderTextColor="#9CA3AF"
+              testID="portfolio-search-input"
+            />
           </View>
-          <Animated.ScrollView
-            style={[styles.scrollArea, { opacity: fadeAnim }]}
+        </View>
+        <Animated.View style={[styles.contentWrapper, { opacity: fadeAnim }]}>
+          <ScrollView
             showsVerticalScrollIndicator={false}
-            contentContainerStyle={[styles.scrollContent, { paddingTop: SEARCH_SECTION_HEIGHT }]}
+            contentContainerStyle={styles.scrollContent}
             refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={handleRefresh} tintColor="#0F172A" />}
             testID="portfolio-scroll"
           >
@@ -504,8 +493,8 @@ export default function PortfolioScreen() {
               </View>
             )}
             <View style={{ height: Spacing.xl }} />
-          </Animated.ScrollView>
-        </View>
+          </ScrollView>
+        </Animated.View>
       </SafeAreaView>
       <LightboxViewer
         visible={lightboxVisible}
@@ -528,29 +517,104 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
   },
-  contentShell: {
-    flex: 1,
-  },
-  scrollArea: {
+  contentWrapper: {
     flex: 1,
   },
   scrollContent: {
     paddingHorizontal: Spacing.lg,
+    paddingTop: Spacing.lg,
     paddingBottom: Spacing.xl,
     gap: Spacing.lg,
   },
-  searchWrapper: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
+  staticSearchSection: {
     paddingHorizontal: Spacing.lg,
     paddingTop: Spacing.lg,
     paddingBottom: Spacing.md,
     backgroundColor: '#FFFFFF',
     borderBottomWidth: 1,
     borderBottomColor: '#E2E8F0',
-    zIndex: 5,
+  },
+  pageHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: Spacing.lg,
+  },
+  titleBlock: {
+    flex: 1,
+    paddingRight: Spacing.md,
+  },
+  pageEyebrow: {
+    color: '#6B7280',
+    letterSpacing: 2,
+    fontSize: 12,
+    fontWeight: '600' as const,
+    marginBottom: 6,
+  },
+  pageTitle: {
+    fontSize: 30,
+    fontWeight: '700' as const,
+    color: '#0F172A',
+  },
+  pageSubtitle: {
+    color: '#475569',
+    fontSize: 15,
+    marginTop: 6,
+    lineHeight: 20,
+  },
+  refreshButton: {
+    width: 42,
+    height: 42,
+    borderRadius: 12,
+    backgroundColor: Colors.white,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+
+  heroCard: {
+    borderRadius: 28,
+    overflow: 'hidden',
+    height: 280,
+    marginBottom: Spacing.lg,
+  },
+  heroImage: {
+    width: '100%',
+    height: '100%',
+  },
+  heroGradient: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  heroContent: {
+    position: 'absolute',
+    bottom: 24,
+    left: 24,
+    right: 24,
+    gap: 8,
+  },
+  heroEyebrow: {
+    color: '#E0E7FF',
+    letterSpacing: 1,
+    fontSize: 13,
+  },
+  heroTitle: {
+    fontSize: 26,
+    fontWeight: '700' as const,
+    color: Colors.white,
+  },
+  heroDescription: {
+    color: '#E2E8F0',
+    fontSize: 15,
+    lineHeight: 22,
+  },
+  heroFooterRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 6,
+  },
+  heroMeta: {
+    color: '#A5B4FC',
+    fontSize: 13,
   },
   emptyState: {
     backgroundColor: '#F8FAFC',
@@ -586,6 +650,10 @@ const styles = StyleSheet.create({
     color: '#0F172A',
     fontWeight: '600' as const,
   },
+  controlsRow: {
+    gap: 12,
+    marginBottom: Spacing.lg,
+  },
   searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -601,6 +669,33 @@ const styles = StyleSheet.create({
     flex: 1,
     color: '#0F172A',
     fontSize: 16,
+  },
+  sortChipsRow: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  sortChip: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    paddingVertical: 12,
+    borderRadius: BorderRadius.xl,
+    backgroundColor: '#F8FAFC',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  sortChipActive: {
+    backgroundColor: '#0F172A',
+    borderColor: '#0F172A',
+  },
+  sortChipLabel: {
+    color: '#6B7280',
+    fontWeight: '600' as const,
+  },
+  sortChipLabelActive: {
+    color: '#FFFFFF',
   },
   masonryGrid: {
     flexDirection: 'row',
@@ -755,15 +850,7 @@ const styles = StyleSheet.create({
   errorText: {
     color: '#0F172A',
     fontSize: 16,
-    fontWeight: '600' as const,
-    marginBottom: 4,
-  },
-  errorSubtext: {
-    color: '#64748B',
-    fontSize: 13,
-    textAlign: 'center',
-    marginBottom: 16,
-    paddingHorizontal: 20,
+    marginBottom: 12,
   },
   retryButton: {
     flexDirection: 'row',
