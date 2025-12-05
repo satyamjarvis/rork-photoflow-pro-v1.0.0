@@ -33,13 +33,15 @@ export default function LoginScreen() {
     try {
       await auth.signIn(email, password, true);
       
-      setTimeout(() => {
+      setTimeout(async () => {
+        await auth.refreshProfile();
+        
         if (auth.profile?.role === 'admin') {
           router.replace('/(tabs)');
         } else {
           router.replace('/public');
         }
-      }, 500);
+      }, 800);
     } catch (error: any) {
       Alert.alert('Login Failed', error.message || 'Invalid credentials');
     } finally {
@@ -51,13 +53,15 @@ export default function LoginScreen() {
     try {
       await auth.signInWithBiometric();
       
-      setTimeout(() => {
+      setTimeout(async () => {
+        await auth.refreshProfile();
+        
         if (auth.profile?.role === 'admin') {
           router.replace('/(tabs)');
         } else {
           router.replace('/public');
         }
-      }, 500);
+      }, 800);
     } catch (error: any) {
       Alert.alert('Error', error.message || 'Biometric authentication failed');
     }
