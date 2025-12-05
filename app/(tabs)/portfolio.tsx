@@ -434,7 +434,7 @@ export default function PortfolioScreen() {
       <SafeAreaView style={styles.safeArea} edges={['top']}>
         <View style={styles.staticSearchSection}>
           <View style={styles.searchContainer}>
-            <Search color="#9CA3AF" size={18} />
+            <Search color="#9CA3AF" size={20} />
             <TextInput
               style={styles.searchInput}
               value={searchQuery}
@@ -528,11 +528,9 @@ const styles = StyleSheet.create({
   },
   staticSearchSection: {
     paddingHorizontal: Spacing.lg,
-    paddingTop: Spacing.lg,
+    paddingTop: Spacing.md,
     paddingBottom: Spacing.md,
     backgroundColor: '#FFFFFF',
-    borderBottomWidth: 1,
-    borderBottomColor: '#E2E8F0',
   },
   pageHeader: {
     flexDirection: 'row',
@@ -658,9 +656,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#F8FAFC',
-    borderRadius: 18,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    borderRadius: 16,
+    paddingHorizontal: 18,
+    paddingVertical: 14,
     gap: 12,
     borderWidth: 1,
     borderColor: '#E2E8F0',
