@@ -4,11 +4,11 @@ import { useRouter, Stack } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '@/contexts/AuthContext';
 import { Colors, Spacing } from '@/constants/colors';
-import { Users, MapPin, Calendar, ImageIcon, Video, Tag, MessageSquare, UserCog, CalendarCheck, FileImage, ChevronRight, ArrowLeftRight } from 'lucide-react-native';
+import { Users, MapPin, Calendar, ImageIcon, Video, Tag, MessageSquare, UserCog, CalendarCheck, FileImage, ChevronRight } from 'lucide-react-native';
 import { trpc } from '@/lib/trpc';
 
-export default function AdminDashboard() {
-  const { isLoading: authLoading, profile } = useAuth();
+export default function HomeScreen() {
+  const { isLoading: authLoading } = useAuth();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { data: stats, isLoading: statsLoading } = trpc.dashboard.stats.useQuery();
@@ -20,7 +20,7 @@ export default function AdminDashboard() {
       <View style={styles.container}>
         <Stack.Screen options={{ headerShown: false }} />
         <View style={[styles.safeHeader, { paddingTop: insets.top }]}>
-          <Text style={styles.pageTitle}>Admin Dashboard</Text>
+          <Text style={styles.pageTitle}>Dashboard</Text>
         </View>
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={Colors.primary} />
@@ -33,21 +33,8 @@ export default function AdminDashboard() {
     <View style={styles.container}>
       <Stack.Screen options={{ headerShown: false }} />
       <View style={[styles.safeHeader, { paddingTop: insets.top }]}>
-        <View style={styles.headerRow}>
-          <View>
-            <Text style={styles.pageTitle}>Admin Dashboard</Text>
-            <Text style={styles.pageSubtitle}>Manage your photography platform</Text>
-          </View>
-          {profile?.role === 'admin' && (
-            <TouchableOpacity 
-              style={styles.switchButton}
-              onPress={() => router.push('/public')}
-            >
-              <ArrowLeftRight color={Colors.primary} size={20} />
-              <Text style={styles.switchButtonText}>Public</Text>
-            </TouchableOpacity>
-          )}
-        </View>
+        <Text style={styles.pageTitle}>Dashboard</Text>
+        <Text style={styles.pageSubtitle}>Overview of your photography platform</Text>
       </View>
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.content}>
 
@@ -86,9 +73,8 @@ export default function AdminDashboard() {
               <View style={styles.statIcon}>
                 <ImageIcon color="#1A1A1A" size={28} />
               </View>
-              <Text style={styles.statNumber}>{stats?.portfolioPublic || stats?.portfolio || 0}</Text>
+              <Text style={styles.statNumber}>{stats?.portfolio || 0}</Text>
               <Text style={styles.statLabel}>Portfolio</Text>
-              <Text style={styles.statSubLabel}>Public Display</Text>
             </TouchableOpacity>
 
             <View style={styles.statCard}>
@@ -227,11 +213,6 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#e0e0e0',
   },
-  headerRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
   pageTitle: {
     fontSize: 28,
     fontWeight: '700' as const,
@@ -242,20 +223,6 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: '#6B7280',
     marginTop: 4,
-  },
-  switchButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#F3F4F6',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 8,
-    gap: 6,
-  },
-  switchButtonText: {
-    color: Colors.primary,
-    fontSize: 14,
-    fontWeight: '600' as const,
   },
   scrollView: {
     flex: 1,
@@ -316,11 +283,6 @@ const styles = StyleSheet.create({
   statLabel: {
     fontSize: 15,
     color: '#6B7280',
-  },
-  statSubLabel: {
-    fontSize: 12,
-    color: '#9CA3AF',
-    marginTop: 2,
   },
   actionCard: {
     backgroundColor: '#FFFFFF',

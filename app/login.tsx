@@ -5,7 +5,7 @@ import {
   TextInput,
   TouchableOpacity,
   StyleSheet,
-
+  Image,
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
@@ -20,7 +20,7 @@ export default function LoginScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const auth = useAuth();
+  const { signIn, signInWithBiometric } = useAuth();
   const router = useRouter();
 
   const handleLogin = async () => {
@@ -31,20 +31,8 @@ export default function LoginScreen() {
 
     setIsLoading(true);
     try {
-      await auth.signIn(email, password, true);
-      
-      await new Promise(resolve => setTimeout(resolve, 800));
-      const currentProfile = await auth.refreshProfile();
-      
-      console.log('[Login] User role:', currentProfile?.role);
-      
-      if (currentProfile?.role === 'admin') {
-        console.log('[Login] Redirecting admin to dashboard');
-        router.replace('/(tabs)');
-      } else {
-        console.log('[Login] Redirecting viewer to public');
-        router.replace('/public');
-      }
+      await signIn(email, password, true);
+      router.replace('/(tabs)');
     } catch (error: any) {
       Alert.alert('Login Failed', error.message || 'Invalid credentials');
     } finally {
@@ -54,20 +42,8 @@ export default function LoginScreen() {
 
   const handleBiometricLogin = async () => {
     try {
-      await auth.signInWithBiometric();
-      
-      await new Promise(resolve => setTimeout(resolve, 800));
-      const currentProfile = await auth.refreshProfile();
-      
-      console.log('[Biometric Login] User role:', currentProfile?.role);
-      
-      if (currentProfile?.role === 'admin') {
-        console.log('[Biometric Login] Redirecting admin to dashboard');
-        router.replace('/(tabs)');
-      } else {
-        console.log('[Biometric Login] Redirecting viewer to public');
-        router.replace('/public');
-      }
+      await signInWithBiometric();
+      router.replace('/(tabs)');
     } catch (error: any) {
       Alert.alert('Error', error.message || 'Biometric authentication failed');
     }

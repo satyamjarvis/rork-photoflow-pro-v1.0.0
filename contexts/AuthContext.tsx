@@ -36,7 +36,7 @@ type AuthActions = {
   signIn: (email: string, password: string, rememberMe?: boolean) => Promise<void>;
   signUp: (email: string, password: string, name?: string) => Promise<void>;
   signOut: () => Promise<void>;
-  refreshProfile: () => Promise<UserProfile | null>;
+  refreshProfile: () => Promise<void>;
   updateProfile: (updates: Partial<UserProfile>) => Promise<void>;
   changePassword: (newPassword: string) => Promise<void>;
   deleteAccount: () => Promise<void>;
@@ -89,7 +89,7 @@ export const [AuthContext, useAuth] = createContextHook<AuthState & AuthActions>
     }
   };
 
-  const loadProfile = async (userId: string): Promise<UserProfile | null> => {
+  const loadProfile = async (userId: string) => {
     try {
       const { data, error } = await supabase
         .from('profiles')
@@ -99,10 +99,8 @@ export const [AuthContext, useAuth] = createContextHook<AuthState & AuthActions>
 
       if (error) throw error;
       setProfile(data as UserProfile);
-      return data as UserProfile;
     } catch (error) {
       console.error('Failed to load profile:', error);
-      return null;
     }
   };
 
@@ -225,11 +223,10 @@ export const [AuthContext, useAuth] = createContextHook<AuthState & AuthActions>
     }
   };
 
-  const refreshProfile = async (): Promise<UserProfile | null> => {
+  const refreshProfile = async () => {
     if (user) {
-      return await loadProfile(user.id);
+      await loadProfile(user.id);
     }
-    return null;
   };
 
   const updateProfile = async (updates: Partial<UserProfile>) => {
