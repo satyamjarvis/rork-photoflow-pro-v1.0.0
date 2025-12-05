@@ -1,6 +1,7 @@
 import createContextHook from '@nkzw/create-context-hook';
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
+import { logAdminAction } from '@/lib/logAdminAction';
 import { User, Session } from '@supabase/supabase-js';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as LocalAuthentication from 'expo-local-authentication';
@@ -74,12 +75,11 @@ export const [AuthContext, useAuth] = createContextHook<AuthState & AuthActions>
       setAdminModeEnabled(enabled);
       
       if (profile?.role === 'admin') {
-        const { error: auditError } = await (supabase.from('audit_logs') as any).insert({
-          table_name: 'profiles',
+        const { error: auditError } = await logAdminAction({
+          tableName: 'profiles',
           action: enabled ? 'admin_mode_enabled' : 'admin_mode_disabled',
-          performed_by: profile.id,
-          row_id: profile.id,
-          payload: { admin_mode: enabled } as any,
+          rowId: profile.id,
+          payload: { admin_mode: enabled },
         });
         if (auditError) console.error('Failed to log audit:', JSON.stringify(auditError, null, 2));
       }
