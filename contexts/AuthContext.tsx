@@ -51,6 +51,19 @@ type AuthActions = {
 const BIOMETRIC_KEY = 'photoflow_biometric_credentials';
 const ADMIN_MODE_KEY = 'photoFlow_admin_mode';
 
+const clearAuthStorage = async () => {
+  try {
+    const keys = await AsyncStorage.getAllKeys();
+    const authKeys = keys.filter(key => key.includes('supabase') || key.includes('sb-'));
+    if (authKeys.length > 0) {
+      console.log('[AuthContext] Clearing auth keys:', authKeys);
+      await AsyncStorage.multiRemove(authKeys);
+    }
+  } catch (error) {
+    console.error('[AuthContext] Failed to clear auth storage:', error);
+  }
+};
+
 export const [AuthContext, useAuth] = createContextHook<AuthState & AuthActions>(() => {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
@@ -126,9 +139,13 @@ export const [AuthContext, useAuth] = createContextHook<AuthState & AuthActions>
     console.log('[AuthContext] Initializing...');
     loadAdminMode();
 
-    supabase.auth.getSession().then(({ data: { session }, error }) => {
+    supabase.auth.getSession().then(async ({ data: { session }, error }) => {
       if (error) {
         console.error('[AuthContext] Failed to get session:', error.message);
+        if (error.message.includes('Refresh Token') || error.message.includes('Invalid')) {
+          console.log('[AuthContext] Clearing corrupted session...');
+          await clearAuthStorage();
+        }
       }
       console.log('[AuthContext] Session:', session ? 'Active' : 'No session');
       setSession(session);
@@ -137,13 +154,27 @@ export const [AuthContext, useAuth] = createContextHook<AuthState & AuthActions>
         loadProfile(session.user.id);
       }
       setIsLoading(false);
-    }).catch((err) => {
+    }).catch(async (err) => {
       console.error('[AuthContext] Session initialization error:', err);
+      if (err?.message?.includes('Refresh Token') || err?.message?.includes('Invalid')) {
+        console.log('[AuthContext] Clearing corrupted session...');
+        await clearAuthStorage();
+      }
       setIsLoading(false);
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       console.log('[AuthContext] Auth state changed:', event);
+      
+      if (event === 'TOKEN_REFRESHED') {
+        console.log('[AuthContext] Token refreshed successfully');
+      }
+      
+      if (event === 'SIGNED_OUT') {
+        console.log('[AuthContext] User signed out, clearing session');
+        clearAuthStorage();
+      }
+      
       setSession(session);
       setUser(session?.user ?? null);
       if (session?.user) {
