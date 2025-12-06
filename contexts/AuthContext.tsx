@@ -91,16 +91,34 @@ export const [AuthContext, useAuth] = createContextHook<AuthState & AuthActions>
 
   const loadProfile = async (userId: string) => {
     try {
+      console.log('[AuthContext] Loading profile for user:', userId);
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', userId)
         .single();
 
-      if (error) throw error;
-      setProfile(data as UserProfile);
-    } catch (error) {
-      console.error('Failed to load profile:', error);
+      if (error) {
+        console.error('[AuthContext] Profile load error:', JSON.stringify(error, null, 2));
+        throw error;
+      }
+      
+      if (!data) {
+        console.error('[AuthContext] No profile data returned for user:', userId);
+        throw new Error('Profile not found');
+      }
+      
+      const typedData = data as UserProfile;
+      console.log('[AuthContext] Profile loaded successfully:', typedData.email);
+      setProfile(typedData);
+    } catch (error: any) {
+      console.error('[AuthContext] Failed to load profile:', {
+        message: error?.message || 'Unknown error',
+        code: error?.code,
+        details: error?.details,
+        hint: error?.hint,
+      });
+      setProfile(null);
     }
   };
 

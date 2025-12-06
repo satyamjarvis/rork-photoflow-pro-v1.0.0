@@ -113,8 +113,20 @@ export default function ProfileScreen() {
 
   if (!profile) {
     return (
-      <View style={styles.container}>
-        <Text style={styles.text}>Not logged in</Text>
+      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center', padding: 20 }]}>
+        <Text style={[styles.text, { fontSize: 18, textAlign: 'center', marginBottom: 20 }]}>
+          Profile Not Found
+        </Text>
+        <Text style={{ fontSize: 14, color: '#666', textAlign: 'center', marginBottom: 20 }}>
+          Your profile could not be loaded. This may be due to a database configuration issue.
+        </Text>
+        <TouchableOpacity
+          style={[styles.signOutButton, { width: '100%', maxWidth: 300 }]}
+          onPress={signOut}
+        >
+          <LogOut color="#fff" size={20} />
+          <Text style={styles.signOutButtonText}>Sign Out</Text>
+        </TouchableOpacity>
       </View>
     );
   }
