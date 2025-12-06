@@ -954,7 +954,14 @@ BEGIN
   IF admin_count = 0 THEN
     RAISE WARNING 'No admin users found!';
   END IF;
-END $$;
+  
+  RAISE NOTICE '========================================';
+  RAISE NOTICE 'SETUP COMPLETE!';
+  RAISE NOTICE 'You can now login with:';
+  RAISE NOTICE 'Email: dave0912@gmail.com';
+  RAISE NOTICE 'Password: Access12345';
+  RAISE NOTICE '========================================';
+END $;
 
 -- Show admin user
 SELECT 
@@ -974,10 +981,3 @@ SELECT
   public
 FROM storage.buckets
 ORDER BY name;
-
-RAISE NOTICE '========================================';
-RAISE NOTICE 'SETUP COMPLETE!';
-RAISE NOTICE 'You can now login with:';
-RAISE NOTICE 'Email: dave0912@gmail.com';
-RAISE NOTICE 'Password: Access12345';
-RAISE NOTICE '========================================';
