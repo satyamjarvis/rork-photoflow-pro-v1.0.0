@@ -8,7 +8,7 @@ import { Colors } from "@/constants/colors";
 
 export default function TabLayout() {
   const { t } = useTranslation();
-  const { isAuthenticated, isLoading, profile, adminModeEnabled } = useAuth();
+  const { isAuthenticated, isLoading } = useAuth();
   const router = useRouter();
   const segments = useSegments();
 
@@ -16,15 +16,11 @@ export default function TabLayout() {
     if (isLoading) return;
 
     const inTabsGroup = segments[0]?.includes('tabs');
-    const inUsersRoute = segments[1] === 'users';
-    const inProfileRoute = segments[1] === 'profile';
 
     if (!isAuthenticated && inTabsGroup) {
       router.replace('/login');
-    } else if (isAuthenticated && inTabsGroup && profile?.role === 'admin' && adminModeEnabled && !inUsersRoute && !inProfileRoute) {
-      router.replace('/(admin)');
     }
-  }, [isAuthenticated, isLoading, profile, adminModeEnabled, segments, router]);
+  }, [isAuthenticated, isLoading, segments, router]);
 
   return (
     <Tabs
