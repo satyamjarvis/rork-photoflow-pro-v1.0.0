@@ -25,20 +25,21 @@ END $$;
 -- ============================================
 
 -- This function bypasses RLS to check admin role
+DROP FUNCTION IF EXISTS public.check_is_admin(UUID);
 CREATE OR REPLACE FUNCTION public.check_is_admin(check_user_id UUID)
 RETURNS BOOLEAN
 LANGUAGE sql
 SECURITY DEFINER
 STABLE
 SET search_path = public
-AS $$
+AS $
   SELECT EXISTS (
     SELECT 1 
     FROM public.profiles 
     WHERE id = check_user_id 
     AND role = 'admin'
   );
-$$;
+$;
 
 -- Grant execute permissions
 GRANT EXECUTE ON FUNCTION public.check_is_admin(UUID) TO postgres, anon, authenticated, service_role;
@@ -86,12 +87,13 @@ CREATE POLICY "profiles_delete_admin" ON public.profiles
 -- STEP 4: Fix signup trigger
 -- ============================================
 
+DROP FUNCTION IF EXISTS public.handle_new_user();
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS trigger
 LANGUAGE plpgsql
 SECURITY DEFINER
 SET search_path = public
-AS $$
+AS $
 DECLARE
   user_count INT;
 BEGIN
