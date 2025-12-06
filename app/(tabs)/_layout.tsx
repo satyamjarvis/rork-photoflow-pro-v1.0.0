@@ -16,10 +16,11 @@ export default function TabLayout() {
     if (isLoading) return;
 
     const inTabsGroup = segments[0]?.includes('tabs');
+    const inUsersRoute = segments[1] === 'users';
 
     if (!isAuthenticated && inTabsGroup) {
       router.replace('/login');
-    } else if (isAuthenticated && inTabsGroup && profile?.role === 'admin' && adminModeEnabled) {
+    } else if (isAuthenticated && inTabsGroup && profile?.role === 'admin' && adminModeEnabled && !inUsersRoute) {
       router.replace('/(admin)');
     }
   }, [isAuthenticated, isLoading, profile, adminModeEnabled, segments, router]);

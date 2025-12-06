@@ -10,14 +10,12 @@ export default function AdminLayout() {
   useEffect(() => {
     if (isLoading) return;
 
-    const inAdminGroup = segments[0]?.includes('admin');
+    const inAdminGroup = segments[0] === '(admin)';
 
     if (!isAuthenticated && inAdminGroup) {
       router.replace('/login');
-    } else if (isAuthenticated && inAdminGroup) {
-      if (profile?.role !== 'admin' || !adminModeEnabled) {
-        router.replace('/(tabs)/portfolio');
-      }
+    } else if (isAuthenticated && inAdminGroup && (profile?.role !== 'admin' || !adminModeEnabled)) {
+      router.replace('/(tabs)/portfolio');
     }
   }, [isAuthenticated, profile, adminModeEnabled, isLoading, segments, router]);
 
