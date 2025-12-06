@@ -15,7 +15,7 @@ export default publicProcedure.query(async ({ ctx }) => {
     supabase.from("profiles").select("id", { count: "exact", head: true }),
     supabase.from("locations").select("id", { count: "exact", head: true }),
     supabase.from("workshops").select("id", { count: "exact", head: true }),
-    supabase.from("portfolio").select("id", { count: "exact", head: true }).eq("visible", true),
+    supabase.from("portfolio").select("id", { count: "exact", head: true }),
     supabase.from("bts_videos").select("id", { count: "exact", head: true }),
     supabase.from("coupons").select("id", { count: "exact", head: true }),
     supabase
