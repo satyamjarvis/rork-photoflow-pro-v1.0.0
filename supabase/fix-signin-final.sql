@@ -1,68 +1,89 @@
--- Final fix for "Database error granting user" on sign-in
--- The issue: RLS policies checking admin role during sign-in create problems
--- Solution: Simplify policies to avoid any recursive checks during authentication
+-- FINAL FIX for "Database error granting user"
+-- This resolves infinite recursion in RLS policies during authentication
 
 -- ============================================
--- STEP 1: Drop ALL policies on profiles table
+-- STEP 1: Drop ALL existing policies on profiles
 -- ============================================
 
 DO $$ 
 DECLARE
     r RECORD;
 BEGIN
-    FOR r IN (SELECT policyname FROM pg_policies WHERE tablename = 'profiles') LOOP
-        EXECUTE 'DROP POLICY IF EXISTS "' || r.policyname || '" ON profiles';
+    FOR r IN (
+        SELECT policyname 
+        FROM pg_policies 
+        WHERE tablename = 'profiles' 
+        AND schemaname = 'public'
+    ) LOOP
+        EXECUTE 'DROP POLICY IF EXISTS "' || r.policyname || '" ON public.profiles';
     END LOOP;
+    RAISE NOTICE 'All existing policies dropped';
 END $$;
 
 -- ============================================
--- STEP 2: Create SIMPLE, non-blocking policies
+-- STEP 2: Create helper function (SECURITY DEFINER)
 -- ============================================
 
--- Policy 1: Allow INSERT for signup (CRITICAL - no checks)
-CREATE POLICY "Enable insert for signup" ON profiles
+-- This function bypasses RLS to check admin role
+CREATE OR REPLACE FUNCTION public.check_is_admin(check_user_id UUID)
+RETURNS BOOLEAN
+LANGUAGE sql
+SECURITY DEFINER
+STABLE
+SET search_path = public
+AS $$
+  SELECT EXISTS (
+    SELECT 1 
+    FROM public.profiles 
+    WHERE id = check_user_id 
+    AND role = 'admin'
+  );
+$$;
+
+-- Grant execute permissions
+GRANT EXECUTE ON FUNCTION public.check_is_admin(UUID) TO postgres, anon, authenticated, service_role;
+
+-- ============================================
+-- STEP 3: Create simple, non-recursive policies
+-- ============================================
+
+-- INSERT: Allow signup to create profiles (no restrictions)
+CREATE POLICY "profiles_insert_signup" ON public.profiles
   FOR INSERT
   WITH CHECK (true);
 
--- Policy 2: Users can SELECT their own profile
-CREATE POLICY "Enable read own profile" ON profiles
+-- SELECT: Users can read their own profile (direct comparison, no subquery)
+CREATE POLICY "profiles_select_own" ON public.profiles
   FOR SELECT
-  USING (auth.uid() = id);
+  USING (id = auth.uid());
 
--- Policy 3: Admins can SELECT all profiles
--- IMPORTANT: Use a separate query with LIMIT to prevent recursion
-CREATE POLICY "Enable read all for admins" ON profiles
+-- SELECT: Admins can read all profiles (using helper function)
+CREATE POLICY "profiles_select_admin" ON public.profiles
   FOR SELECT
-  USING (
-    (SELECT role FROM profiles WHERE id = auth.uid() LIMIT 1) = 'admin'
-  );
+  USING (public.check_is_admin(auth.uid()));
 
--- Policy 4: Users can UPDATE their own profile
-CREATE POLICY "Enable update own profile" ON profiles
+-- UPDATE: Users can update their own profile (direct comparison)
+CREATE POLICY "profiles_update_own" ON public.profiles
   FOR UPDATE
-  USING (auth.uid() = id);
+  USING (id = auth.uid());
 
--- Policy 5: Admins can UPDATE any profile
-CREATE POLICY "Enable update all for admins" ON profiles
+-- UPDATE: Admins can update any profile (using helper function)
+CREATE POLICY "profiles_update_admin" ON public.profiles
   FOR UPDATE
-  USING (
-    (SELECT role FROM profiles WHERE id = auth.uid() LIMIT 1) = 'admin'
-  );
+  USING (public.check_is_admin(auth.uid()));
 
--- Policy 6: Users can DELETE their own profile
-CREATE POLICY "Enable delete own profile" ON profiles
+-- DELETE: Users can delete their own profile
+CREATE POLICY "profiles_delete_own" ON public.profiles
   FOR DELETE
-  USING (auth.uid() = id);
+  USING (id = auth.uid());
 
--- Policy 7: Admins can DELETE any profile
-CREATE POLICY "Enable delete all for admins" ON profiles
+-- DELETE: Admins can delete any profile (using helper function)
+CREATE POLICY "profiles_delete_admin" ON public.profiles
   FOR DELETE
-  USING (
-    (SELECT role FROM profiles WHERE id = auth.uid() LIMIT 1) = 'admin'
-  );
+  USING (public.check_is_admin(auth.uid()));
 
 -- ============================================
--- STEP 3: Ensure trigger function is correct
+-- STEP 4: Fix signup trigger
 -- ============================================
 
 CREATE OR REPLACE FUNCTION public.handle_new_user()
@@ -74,7 +95,7 @@ AS $$
 DECLARE
   user_count INT;
 BEGIN
-  -- Count existing profiles
+  -- Count existing profiles (bypasses RLS because of SECURITY DEFINER)
   SELECT COUNT(*) INTO user_count FROM public.profiles;
   
   -- Insert new profile
@@ -98,19 +119,20 @@ BEGIN
   RETURN NEW;
 EXCEPTION
   WHEN unique_violation THEN
-    -- Profile exists, just return
+    -- Profile already exists, just return
+    RAISE NOTICE 'Profile already exists for user: %', NEW.id;
     RETURN NEW;
   WHEN others THEN
-    -- Log but don't block auth
-    RAISE WARNING 'handle_new_user error: %', SQLERRM;
+    -- Log error but don't block authentication
+    RAISE WARNING 'handle_new_user error: % (SQLSTATE: %)', SQLERRM, SQLSTATE;
     RETURN NEW;
 END;
 $$;
 
--- Grant permissions
+-- Ensure proper permissions
 GRANT EXECUTE ON FUNCTION public.handle_new_user() TO postgres, anon, authenticated, service_role;
 
--- Ensure trigger exists
+-- Recreate trigger
 DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
 CREATE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
@@ -118,68 +140,134 @@ CREATE TRIGGER on_auth_user_created
   EXECUTE FUNCTION public.handle_new_user();
 
 -- ============================================
--- STEP 4: Sync existing auth users
+-- STEP 5: Sync existing auth users
 -- ============================================
 
-INSERT INTO public.profiles (id, email, role, status, onboarding_completed, last_login, created_at, updated_at)
-SELECT 
-  au.id,
-  COALESCE(au.email, au.phone, 'user-' || au.id::text),
-  CASE 
-    WHEN (SELECT COUNT(*) FROM public.profiles WHERE role = 'admin') = 0 THEN 'admin'
-    ELSE 'viewer'
-  END,
-  'active',
-  true,
-  COALESCE(au.last_sign_in_at, au.created_at),
-  au.created_at,
-  now()
-FROM auth.users au
-WHERE NOT EXISTS (SELECT 1 FROM public.profiles p WHERE p.id = au.id)
-ON CONFLICT (id) DO NOTHING;
+-- Create profiles for any auth users that don't have one
+DO $$
+DECLARE
+  admin_exists BOOLEAN;
+  auth_user RECORD;
+  new_role TEXT;
+BEGIN
+  -- Check if any admin exists
+  SELECT EXISTS (SELECT 1 FROM public.profiles WHERE role = 'admin') INTO admin_exists;
+  
+  -- Insert profiles for users without them
+  FOR auth_user IN 
+    SELECT au.id, au.email, au.phone, au.created_at, au.last_sign_in_at
+    FROM auth.users au
+    LEFT JOIN public.profiles p ON p.id = au.id
+    WHERE p.id IS NULL
+  LOOP
+    -- First user without profile becomes admin if no admin exists
+    IF NOT admin_exists THEN
+      new_role := 'admin';
+      admin_exists := true;
+    ELSE
+      new_role := 'viewer';
+    END IF;
+    
+    INSERT INTO public.profiles (
+      id, 
+      email, 
+      role, 
+      status, 
+      onboarding_completed, 
+      last_login,
+      created_at,
+      updated_at
+    )
+    VALUES (
+      auth_user.id,
+      COALESCE(auth_user.email, auth_user.phone, 'user-' || auth_user.id::text),
+      new_role,
+      'active',
+      true,
+      COALESCE(auth_user.last_sign_in_at, auth_user.created_at),
+      auth_user.created_at,
+      now()
+    )
+    ON CONFLICT (id) DO NOTHING;
+    
+    RAISE NOTICE 'Created profile for user: % with role: %', auth_user.email, new_role;
+  END LOOP;
+END $$;
 
 -- ============================================
--- STEP 5: Verification
+-- STEP 6: Grant necessary permissions
 -- ============================================
 
-SELECT 
-  '=== VERIFICATION RESULTS ===' AS status;
+-- Ensure service role can perform operations
+GRANT ALL ON public.profiles TO service_role;
+GRANT ALL ON public.audit_logs TO service_role;
 
-SELECT 
-  'Auth users:' AS metric,
-  COUNT(*)::TEXT AS value
-FROM auth.users
-UNION ALL
-SELECT 
-  'Profiles:',
-  COUNT(*)::TEXT
-FROM public.profiles
-UNION ALL
-SELECT 
-  'Admins:',
-  COUNT(*)::TEXT
-FROM public.profiles WHERE role = 'admin'
-UNION ALL
-SELECT 
-  'Orphaned users:',
-  COUNT(*)::TEXT
-FROM auth.users au
-LEFT JOIN public.profiles p ON au.id = p.id
-WHERE p.id IS NULL;
+-- ============================================
+-- STEP 7: Verification
+-- ============================================
+
+DO $$
+DECLARE
+  auth_count INT;
+  profile_count INT;
+  admin_count INT;
+  orphan_count INT;
+  policy_count INT;
+BEGIN
+  SELECT COUNT(*) INTO auth_count FROM auth.users;
+  SELECT COUNT(*) INTO profile_count FROM public.profiles;
+  SELECT COUNT(*) INTO admin_count FROM public.profiles WHERE role = 'admin';
+  SELECT COUNT(*) INTO orphan_count 
+    FROM auth.users au 
+    LEFT JOIN public.profiles p ON au.id = p.id 
+    WHERE p.id IS NULL;
+  SELECT COUNT(*) INTO policy_count 
+    FROM pg_policies 
+    WHERE tablename = 'profiles' AND schemaname = 'public';
+  
+  RAISE NOTICE '========================================';
+  RAISE NOTICE 'VERIFICATION COMPLETE';
+  RAISE NOTICE '========================================';
+  RAISE NOTICE 'Auth users: %', auth_count;
+  RAISE NOTICE 'Profiles: %', profile_count;
+  RAISE NOTICE 'Admins: %', admin_count;
+  RAISE NOTICE 'Orphaned auth users: %', orphan_count;
+  RAISE NOTICE 'Active policies: %', policy_count;
+  RAISE NOTICE '========================================';
+  
+  IF orphan_count > 0 THEN
+    RAISE WARNING 'Found % orphaned auth users!', orphan_count;
+  END IF;
+  
+  IF admin_count = 0 THEN
+    RAISE WARNING 'No admin users found! First signup will become admin.';
+  END IF;
+END $$;
 
 -- Show all profiles
 SELECT 
   email,
   role,
   status,
-  last_login
+  onboarding_completed,
+  last_login,
+  created_at
 FROM public.profiles
 ORDER BY created_at ASC;
 
 -- Show active policies
 SELECT 
-  policyname,
-  cmd
+  'Profile Policies:' as info,
+  policyname as name,
+  cmd as operation,
+  CASE 
+    WHEN qual IS NOT NULL THEN 'USING clause present'
+    ELSE 'No USING clause'
+  END as using_clause,
+  CASE 
+    WHEN with_check IS NOT NULL THEN 'WITH CHECK present'
+    ELSE 'No WITH CHECK'
+  END as check_clause
 FROM pg_policies 
-WHERE tablename = 'profiles'
+WHERE tablename = 'profiles' AND schemaname = 'public'
 ORDER BY cmd, policyname;
