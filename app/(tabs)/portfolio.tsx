@@ -5,6 +5,7 @@ import {
   Dimensions,
   Image,
   Modal,
+  Platform,
   RefreshControl,
   ScrollView,
   StyleSheet,
@@ -350,22 +351,41 @@ export default function PortfolioScreen() {
   React.useEffect(() => {
     filteredItems.forEach((item) => {
       if (!imageDimensions[item.id]) {
-        Image.getSize(
-          resolvePortfolioImageUrl(item.image_url),
-          (width, height) => {
+        if (Platform.OS === 'web') {
+          const img = new window.Image();
+          img.crossOrigin = 'anonymous';
+          img.onload = () => {
             setImageDimensions((prev) => ({
               ...prev,
-              [item.id]: { width, height },
+              [item.id]: { width: img.naturalWidth || 400, height: img.naturalHeight || 600 },
             }));
-          },
-          (error) => {
+          };
+          img.onerror = (error) => {
             console.error('[Portfolio] Failed to get image size:', error);
             setImageDimensions((prev) => ({
               ...prev,
-              [item.id]: { width: 1, height: 1 },
+              [item.id]: { width: 400, height: 600 },
             }));
-          }
-        );
+          };
+          img.src = resolvePortfolioImageUrl(item.image_url);
+        } else {
+          Image.getSize(
+            resolvePortfolioImageUrl(item.image_url),
+            (width, height) => {
+              setImageDimensions((prev) => ({
+                ...prev,
+                [item.id]: { width, height },
+              }));
+            },
+            (error) => {
+              console.error('[Portfolio] Failed to get image size:', error);
+              setImageDimensions((prev) => ({
+                ...prev,
+                [item.id]: { width: 400, height: 600 },
+              }));
+            }
+          );
+        }
       }
     });
   }, [filteredItems, imageDimensions]);
