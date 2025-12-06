@@ -225,6 +225,17 @@ export const [AuthContext, useAuth] = createContextHook<AuthState & AuthActions>
 
       if (data.user) {
         await loadProfile(data.user.id);
+        
+        const { data: profileData } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', data.user.id)
+          .single();
+        
+        if ((profileData as any)?.role === 'admin') {
+          console.log('[AuthContext] Admin user detected, enabling admin mode');
+          await setAdminMode(true);
+        }
       }
     } catch (error) {
       console.error('Sign in error:', error);
