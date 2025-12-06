@@ -268,7 +268,7 @@ export default function ProfileScreen() {
                 
                 <TouchableOpacity
                   style={styles.adminActionItem}
-                  onPress={() => router.push('/(tabs)/users')}
+                  onPress={() => router.push('/user-management')}
                 >
                   <View style={styles.adminActionLeft}>
                     <View style={[styles.settingIcon, { backgroundColor: '#E8F5E9' }]}>

@@ -142,7 +142,7 @@ export default function DashboardScreen() {
 
           <TouchableOpacity 
             style={styles.actionCard}
-            onPress={() => router.push('/(tabs)/users')}
+            onPress={() => router.push('/user-management')}
           >
             <View style={styles.actionIcon}>
               <UserCog color="#1A1A1A" size={24} />
