@@ -274,6 +274,10 @@ ALTER TABLE licensing_inquiries ENABLE ROW LEVEL SECURITY;
 ALTER TABLE password_reset_tokens ENABLE ROW LEVEL SECURITY;
 
 -- Step 8: Create Policies
+DROP POLICY IF EXISTS "Allow profile creation" ON profiles;
+CREATE POLICY "Allow profile creation" ON profiles
+  FOR INSERT WITH CHECK (true);
+
 DROP POLICY IF EXISTS "Users can read own profile" ON profiles;
 CREATE POLICY "Users can read own profile" ON profiles
   FOR SELECT USING (auth.uid() = id);
@@ -281,22 +285,32 @@ CREATE POLICY "Users can read own profile" ON profiles
 DROP POLICY IF EXISTS "Admins can read all profiles" ON profiles;
 CREATE POLICY "Admins can read all profiles" ON profiles
   FOR SELECT USING (
-    EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'admin')
+    (SELECT role FROM profiles WHERE id = auth.uid()) = 'admin'
   );
 
 DROP POLICY IF EXISTS "Users can update own profile" ON profiles;
 CREATE POLICY "Users can update own profile" ON profiles
-  FOR UPDATE USING (auth.uid() = id);
+  FOR UPDATE USING (auth.uid() = id)
+  WITH CHECK (
+    auth.uid() = id AND
+    role = (SELECT role FROM profiles WHERE id = auth.uid())
+  );
 
 DROP POLICY IF EXISTS "Admins can update any profile" ON profiles;
 CREATE POLICY "Admins can update any profile" ON profiles
   FOR UPDATE USING (
-    EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'admin')
+    (SELECT role FROM profiles WHERE id = auth.uid()) = 'admin'
   );
 
 DROP POLICY IF EXISTS "Users can delete own account" ON profiles;
 CREATE POLICY "Users can delete own account" ON profiles
   FOR DELETE USING (auth.uid() = id);
+
+DROP POLICY IF EXISTS "Admins can delete any account" ON profiles;
+CREATE POLICY "Admins can delete any account" ON profiles
+  FOR DELETE USING (
+    (SELECT role FROM profiles WHERE id = auth.uid()) = 'admin'
+  );
 
 DROP POLICY IF EXISTS "Anyone can read visible locations" ON locations;
 CREATE POLICY "Anyone can read visible locations" ON locations
